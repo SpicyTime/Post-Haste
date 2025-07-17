@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://dl5bs225a16q4"]
+
+[ext_resource type="Texture2D" uid="uid://w48jqfrq5gdp" path="res://icon.svg" id="1_jjlgu"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hxwku"]
+size = Vector2(26, 26)
+
+[node name="MailReceiver" type="Area2D"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_hxwku")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(-2.27374e-13, -2.27374e-13)
+scale = Vector2(0.171875, 0.15625)
+texture = ExtResource("1_jjlgu")

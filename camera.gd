@@ -11,12 +11,12 @@ var bottom_bound: float
 const SPEED := 400.0
 
 func _ready() -> void:
-	var half_viewport = get_viewport_rect().size * 0.5
+	var half_viewport: Vector2 = get_viewport_rect().size * 0.5
 
 	# Margins from viewport center (not full size)
-	var x_margin = 110
-	var top_margin = 40
-	var bottom_margin = 20
+	var x_margin: int = 110
+	var top_margin: int = 40
+	var bottom_margin: int = 20
 
 	left_bound = -(half_viewport.x - x_margin)
 	right_bound = (half_viewport.x - x_margin)

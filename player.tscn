@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://bika4472fwiup"]
 
 [ext_resource type="Script" uid="uid://rdgjlxsv3ais" path="res://player.gd" id="1_onrkg"]
-[ext_resource type="Texture2D" uid="uid://bhf3kxihtu8ji" path="res://Assets/Sprites/Player/PlayerSliding.png" id="2_onrkg"]
+[ext_resource type="Texture2D" uid="uid://cd5po7vow02jv" path="res://Assets/Sprites/Player/PlayerIdle.png" id="2_onrkg"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_onrkg"]
 radius = 7.0
@@ -39,11 +39,11 @@ shape = SubResource("CapsuleShape2D_hqtel")
 disabled = true
 
 [node name="LeftWallCheck" type="RayCast2D" parent="."]
-position = Vector2(0, 4)
+position = Vector2(0, -2)
 target_position = Vector2(-12, 0)
 
 [node name="RightWallCheck" type="RayCast2D" parent="."]
-position = Vector2(0, 4)
+position = Vector2(-1, -2)
 target_position = Vector2(12, 0)
 
 [node name="Label" type="Label" parent="."]
@@ -51,5 +51,3 @@ offset_left = -12.0
 offset_top = -39.0
 offset_right = 12.0
 offset_bottom = -16.0
-
-[node name="Colliders" type="Node" parent="."]
