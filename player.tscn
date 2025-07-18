@@ -27,6 +27,7 @@ position = Vector2(0, 2)
 shape = SubResource("CapsuleShape2D_onrkg")
 
 [node name="SlideCollider" type="CollisionShape2D" parent="."]
+visible = false
 position = Vector2(2, 1)
 rotation = 1.5708
 shape = SubResource("CapsuleShape2D_i3pqv")
@@ -51,3 +52,7 @@ offset_left = -12.0
 offset_top = -39.0
 offset_right = 12.0
 offset_bottom = -16.0
+
+[node name="CoyoteTimer" type="Timer" parent="."]
+
+[connection signal="timeout" from="CoyoteTimer" to="." method="_on_coyote_timer_timeout"]
