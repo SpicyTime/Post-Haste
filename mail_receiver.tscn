@@ -1,11 +1,13 @@
-[gd_scene load_steps=3 format=3 uid="uid://dl5bs225a16q4"]
+[gd_scene load_steps=4 format=3 uid="uid://dl5bs225a16q4"]
 
+[ext_resource type="Script" uid="uid://d0xavlvtm543h" path="res://mail_receiver.gd" id="1_hxwku"]
 [ext_resource type="Texture2D" uid="uid://w48jqfrq5gdp" path="res://icon.svg" id="1_jjlgu"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hxwku"]
 size = Vector2(26, 26)
 
 [node name="MailReceiver" type="Area2D"]
+script = ExtResource("1_hxwku")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_hxwku")
@@ -14,3 +16,5 @@ shape = SubResource("RectangleShape2D_hxwku")
 position = Vector2(-2.27374e-13, -2.27374e-13)
 scale = Vector2(0.171875, 0.15625)
 texture = ExtResource("1_jjlgu")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

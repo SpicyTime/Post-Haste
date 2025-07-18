@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://bika4472fwiup"]
 
 [ext_resource type="Script" uid="uid://rdgjlxsv3ais" path="res://player.gd" id="1_onrkg"]
-[ext_resource type="Texture2D" uid="uid://cd5po7vow02jv" path="res://Assets/Sprites/Player/PlayerIdle.png" id="2_onrkg"]
+[ext_resource type="Texture2D" uid="uid://bye28ffv3eh6b" path="res://Assets/Sprites/Player/PlayerCrouching.png" id="2_onrkg"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_onrkg"]
 radius = 7.0
@@ -13,7 +13,7 @@ height = 28.0
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_hqtel"]
 radius = 6.0
-height = 20.0
+height = 14.0
 
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("1_onrkg")
@@ -34,8 +34,7 @@ shape = SubResource("CapsuleShape2D_i3pqv")
 disabled = true
 
 [node name="CrouchCollider" type="CollisionShape2D" parent="."]
-visible = false
-position = Vector2(-1, 2)
+position = Vector2(-1, 5)
 shape = SubResource("CapsuleShape2D_hqtel")
 disabled = true
 
@@ -54,5 +53,8 @@ offset_right = 12.0
 offset_bottom = -16.0
 
 [node name="CoyoteTimer" type="Timer" parent="."]
+
+[node name="CeilingCheck" type="RayCast2D" parent="."]
+target_position = Vector2(0, -23)
 
 [connection signal="timeout" from="CoyoteTimer" to="." method="_on_coyote_timer_timeout"]

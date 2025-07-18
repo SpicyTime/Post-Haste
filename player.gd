@@ -1,6 +1,8 @@
 extends CharacterBody2D
 @onready var left_wall_check: RayCast2D = $LeftWallCheck
 @onready var right_wall_check: RayCast2D = $RightWallCheck
+@onready var ceiling_check: RayCast2D = $CeilingCheck
+
 @onready var sprite_2d: Sprite2D = $Sprite2D
 @onready var label: Label = $Label
 @onready var coyote_timer: Timer = $CoyoteTimer
@@ -21,8 +23,9 @@ const GRAVITY: int = 1200
 const MAX_WALK_SPEED: int = 200
 const MAX_CROUCH_SPEED: int = 125
 const ACCEL: int = 1000
-const JUMP_FORCE: int = 325
 const SLIDE_FORCE: int = 225
+const JUMP_FORCE: int = 325
+const SLIDE_JUMP_BOOST: int = 30
 const FRICTION: int = 1400
 const SLIDE_FRICTION: int = 300
 var state: PlayerState = PlayerState.IDLE
@@ -32,6 +35,7 @@ var is_sliding: bool = false
 var is_crouching: bool = false
 var jump_pressed: bool = false
 var slide_pressed: bool = false
+var crouch_pressed: bool = false
 var can_coyote: bool = false
 var input_vector: Vector2 = Vector2.ZERO
 var prev_texture: Texture2D
@@ -52,6 +56,8 @@ func _is_touching_wall_only() -> bool:
 func _is_on_left_wall() -> bool:
 	return left_wall_check.is_colliding()  
 
+func _is_touching_ceiling()-> bool: 
+	return ceiling_check.is_colliding()
 func _is_on_right_wall() -> bool:
 	return right_wall_check.is_colliding()
 
@@ -63,7 +69,13 @@ func _perform_wall_jump() -> void:
 		velocity.x = -JUMP_FORCE * 0.75 
 	velocity.y = -JUMP_FORCE *  0.75
 	time_since_wall_jump = 0.0
-
+func _should_perform_slide() -> bool:
+	if  input_vector.x != 0 and is_crouching :
+		if prev_state == PlayerState.FALL:
+			return true
+		elif prev_state != PlayerState.FALL and crouch_pressed:
+			return true
+	return false
 func _handle_input() -> void:
 	var fall_accel: int = 10
 	#Gets the input direction
@@ -73,17 +85,20 @@ func _handle_input() -> void:
 	elif Input.is_action_pressed("move_left"):
 		input_vector.x = -1
 	is_crouching = false
-	if Input.is_key_pressed(KEY_S):
-		velocity.y += fall_accel
+	if Input.is_action_pressed("crouch"):
+		if state == PlayerState.FALL:
+			velocity.y += fall_accel
 		is_crouching = true
+	crouch_pressed = Input.is_action_just_pressed("crouch")
+	
 	#Checks if certain actions are being pressed
-	slide_pressed = input_vector.x != 0  and is_crouching
+	slide_pressed = _should_perform_slide()
 	jump_pressed = Input.is_action_just_pressed("jump")
 	
 	if jump_pressed and (is_on_floor()  or can_coyote):
 		if prev_state == PlayerState.SLIDE:
 			is_sliding = false
-			velocity.y = -JUMP_FORCE + -20
+			velocity.y = -JUMP_FORCE + -SLIDE_JUMP_BOOST
 		else:
 			velocity.y = -JUMP_FORCE
 		
@@ -104,12 +119,12 @@ func _update_state() -> void:
 	prev_state = state
 	#Handles all the basic floor states
 	if is_on_floor() and not is_sliding:
-		if input_vector.x == 0 and not is_crouching:
-			state = PlayerState.IDLE
-		elif is_crouching:
-			state = PlayerState.CROUCH
+		if input_vector.x == 0 and not is_crouching :
+				state = PlayerState.IDLE
 		else:
 			state = PlayerState.RUN
+		if is_crouching or ((prev_state == PlayerState.SLIDE or prev_state == PlayerState.CROUCH) and _is_touching_ceiling()):
+			state = PlayerState.CROUCH
 	#Handles the sliding state
 	elif is_on_floor() and is_sliding:
 		state = PlayerState.SLIDE
@@ -117,12 +132,18 @@ func _update_state() -> void:
 		#If the player is not inputting a horizontal movement direction and the player is going too slow
 		#the slide is cancelled and the player is put in the IDLE state.
 		if input_vector.x == 0 and abs(velocity.x) < 1 and not is_crouching:
-			state = PlayerState.IDLE
+			if _is_touching_ceiling():
+				state = PlayerState.CROUCH
+			else:
+				state = PlayerState.IDLE
 			is_sliding = false
 		#Otherwise, if the player is inputting a movement direction and the player is going too slow
 		#the slide will be cancelled and the player will be put in the RUN state.
 		elif input_vector.x != 0 and abs(velocity.x) < MAX_WALK_SPEED and not is_crouching:
-			state = PlayerState.RUN
+			if _is_touching_ceiling():
+				state = PlayerState.CROUCH
+			else:
+				state = PlayerState.RUN
 			is_sliding = false
 	elif _check_wall_slide_manual() or ( _is_touching_wall_only() and time_since_wall_jump <= jump_chain_time):
 		state = PlayerState.WALL_SLIDE
@@ -151,7 +172,7 @@ func _swap_collider(player_state: PlayerState) -> void:
 		global_position.y += 8
 	elif player_state == PlayerState.CROUCH:
 		$CrouchCollider.disabled = false
-		global_position.y += 8
+		global_position.y += 10
 	else:
 		$RegCollider.disabled = false
 
@@ -194,7 +215,10 @@ func _process_wall_slide(delta: float) -> void:
 	velocity.y = min(velocity.y + GRAVITY * delta, 30)
 
 func _process_crouch(delta: float) -> void:
-	velocity.x = move_toward(velocity.x, 0, FRICTION * delta)
+	if input_vector != Vector2.ZERO:
+		velocity.x = move_toward(velocity.x, input_vector.x * MAX_CROUCH_SPEED, ACCEL * delta)
+	else:
+		velocity.x = move_toward(velocity.x, 0, FRICTION * delta)
 
 func _physics_process(delta: float) -> void:
 	_handle_input()
