@@ -8,7 +8,7 @@ var right_bound: float
 var top_bound: float
 var bottom_bound: float
 
-const SPEED := 400.0
+const SPEED :=  425
 
 func _ready() -> void:
 	var half_viewport: Vector2 = get_viewport_rect().size * 0.5

@@ -6,4 +6,3 @@ func _on_body_entered(body: Node2D) -> void:
 		if GameManager.player_mail_count > 0:
 			GameManager.set_mail_count(GameManager.player_mail_count - 1)
 			queue_free()
-				
