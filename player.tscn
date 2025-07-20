@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://bika4472fwiup"]
 
 [ext_resource type="Script" uid="uid://rdgjlxsv3ais" path="res://player.gd" id="1_onrkg"]
-[ext_resource type="Texture2D" uid="uid://bye28ffv3eh6b" path="res://Assets/Sprites/Player/PlayerCrouching.png" id="2_onrkg"]
+[ext_resource type="Texture2D" uid="uid://fmjgqpfc4ofq" path="res://Assets/Sprites/Player/PlayerHang.png" id="2_onrkg"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_onrkg"]
 radius = 7.0
@@ -16,6 +16,7 @@ radius = 6.0
 height = 14.0
 
 [node name="Player" type="CharacterBody2D"]
+z_index = 2
 script = ExtResource("1_onrkg")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
@@ -34,19 +35,14 @@ shape = SubResource("CapsuleShape2D_i3pqv")
 disabled = true
 
 [node name="CrouchCollider" type="CollisionShape2D" parent="."]
+visible = false
+z_index = 2
 position = Vector2(-1, 5)
 shape = SubResource("CapsuleShape2D_hqtel")
 disabled = true
 
-[node name="LeftWallCheck" type="RayCast2D" parent="."]
-position = Vector2(0, -2)
-target_position = Vector2(-12, 0)
-
-[node name="RightWallCheck" type="RayCast2D" parent="."]
-position = Vector2(-1, -2)
-target_position = Vector2(12, 0)
-
 [node name="Label" type="Label" parent="."]
+z_index = 5
 offset_left = -12.0
 offset_top = -39.0
 offset_right = 12.0
@@ -54,7 +50,34 @@ offset_bottom = -16.0
 
 [node name="CoyoteTimer" type="Timer" parent="."]
 
-[node name="CeilingCheck" type="RayCast2D" parent="."]
-target_position = Vector2(0, -23)
+[node name="HangCooldown" type="Timer" parent="."]
+wait_time = 0.2
+one_shot = true
+
+[node name="RayChecks" type="Node2D" parent="."]
+
+[node name="ClimbCheckRight" type="RayCast2D" parent="RayChecks"]
+position = Vector2(0, -9)
+target_position = Vector2(14, 0)
+
+[node name="ClimbCheckLeft" type="RayCast2D" parent="RayChecks"]
+position = Vector2(0, -9)
+target_position = Vector2(-17, 0)
+
+[node name="RightWallCheck" type="RayCast2D" parent="RayChecks"]
+visible = false
+position = Vector2(-1, -2)
+target_position = Vector2(12, 0)
+
+[node name="LeftWallCheck" type="RayCast2D" parent="RayChecks"]
+visible = false
+position = Vector2(0, -2)
+target_position = Vector2(-12, 0)
+
+[node name="CeilingCheck" type="RayCast2D" parent="RayChecks"]
+visible = false
+position = Vector2(0, 10)
+target_position = Vector2(0, -24)
 
 [connection signal="timeout" from="CoyoteTimer" to="." method="_on_coyote_timer_timeout"]
+[connection signal="timeout" from="HangCooldown" to="." method="_on_hang_cooldown_timeout"]

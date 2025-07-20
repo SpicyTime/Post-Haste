@@ -1,8 +1,9 @@
 extends CharacterBody2D
-@onready var left_wall_check: RayCast2D = $LeftWallCheck
-@onready var right_wall_check: RayCast2D = $RightWallCheck
-@onready var ceiling_check: RayCast2D = $CeilingCheck
-
+@onready var left_wall_check: RayCast2D = $RayChecks/LeftWallCheck
+@onready var right_wall_check: RayCast2D = $RayChecks/RightWallCheck
+@onready var ceiling_check: RayCast2D = $RayChecks/CeilingCheck
+@onready var climb_check_right: RayCast2D = $RayChecks/ClimbCheckRight
+@onready var climb_check_left: RayCast2D = $RayChecks/ClimbCheckLeft
 @onready var sprite_2d: Sprite2D = $Sprite2D
 @onready var label: Label = $Label
 @onready var coyote_timer: Timer = $CoyoteTimer
@@ -16,7 +17,8 @@ enum PlayerState{
 	WALL_SLIDE,
 	SLIDE,
 	FALL,
-	CROUCH
+	CROUCH,
+	HANG
 }
 
 const GRAVITY: int = 1200
@@ -28,6 +30,7 @@ const JUMP_FORCE: int = 325
 const SLIDE_JUMP_BOOST: int = 30
 const FRICTION: int = 1400
 const SLIDE_FRICTION: int = 300
+const AIR_FRICTION: int = 600
 var state: PlayerState = PlayerState.IDLE
 var state_textures: Dictionary = {}
 var state_colliders: Dictionary = {}
@@ -37,6 +40,7 @@ var jump_pressed: bool = false
 var slide_pressed: bool = false
 var crouch_pressed: bool = false
 var can_coyote: bool = false
+var can_hang: bool = true
 var input_vector: Vector2 = Vector2.ZERO
 var prev_texture: Texture2D
 var prev_state: PlayerState = PlayerState.IDLE
@@ -49,7 +53,8 @@ func _check_wall_slide_manual() -> bool:
 		(input_vector.x > 0 and _is_on_right_wall()) or 
 		(input_vector.x < 0 and _is_on_left_wall())
 	) and not is_on_floor()
-
+func _hang_touching_wall() -> bool:
+	return climb_check_left.is_colliding() or climb_check_right.is_colliding()
 func _is_touching_wall_only() -> bool:
 	return (_is_on_right_wall() or _is_on_left_wall()) and not is_on_floor()
 
@@ -69,6 +74,7 @@ func _perform_wall_jump() -> void:
 		velocity.x = -JUMP_FORCE * 0.75 
 	velocity.y = -JUMP_FORCE *  0.75
 	time_since_wall_jump = 0.0
+	
 func _should_perform_slide() -> bool:
 	if  input_vector.x != 0 and is_crouching :
 		if prev_state == PlayerState.FALL:
@@ -76,18 +82,27 @@ func _should_perform_slide() -> bool:
 		elif prev_state != PlayerState.FALL and crouch_pressed:
 			return true
 	return false
+	
 func _handle_input() -> void:
-	var fall_accel: int = 10
+	var prev_input_vector: Vector2 = input_vector
+	var fall_accel: int = 15
 	#Gets the input direction
 	input_vector = Vector2.ZERO
 	if Input.is_action_pressed("move_right"):
 		input_vector.x = 1
 	elif Input.is_action_pressed("move_left"):
 		input_vector.x = -1
+		
+	if prev_input_vector.x != input_vector.x and is_on_floor():
+		velocity.x /= 1.75
+		
 	is_crouching = false
 	if Input.is_action_pressed("crouch"):
 		if state == PlayerState.FALL:
 			velocity.y += fall_accel
+		elif state == PlayerState.HANG:
+			can_hang = false
+			$HangCooldown.start()
 		is_crouching = true
 	crouch_pressed = Input.is_action_just_pressed("crouch")
 	
@@ -147,6 +162,8 @@ func _update_state() -> void:
 			is_sliding = false
 	elif _check_wall_slide_manual() or ( _is_touching_wall_only() and time_since_wall_jump <= jump_chain_time):
 		state = PlayerState.WALL_SLIDE
+	elif _is_touching_wall_only() and  not _hang_touching_wall() and can_hang:
+		state = PlayerState.HANG
 	elif velocity.y < 0 or jump_pressed:
 		state = PlayerState.JUMP
 	else:
@@ -156,7 +173,7 @@ func _update_state() -> void:
 			can_coyote = true
 	#Swaps textures and colliders based on the current PlayerState
 	if prev_texture != state_textures.get(state):
-		label.text = get_state_name(state)
+		label.text = _get_state_name(state)
 		if state in state_textures.keys():
 			sprite_2d.texture = state_textures.get(state)
 			prev_texture = state_textures.get(state)
@@ -169,14 +186,16 @@ func _swap_collider(player_state: PlayerState) -> void:
 	$CrouchCollider.disabled = true
 	if player_state == PlayerState.SLIDE:
 		$SlideCollider.disabled = false
-		global_position.y += 8
+		if prev_state != PlayerState.CROUCH:
+			global_position.y += 8
 	elif player_state == PlayerState.CROUCH:
 		$CrouchCollider.disabled = false
-		global_position.y += 10
+		if prev_state != PlayerState.SLIDE:
+			global_position.y += 10
 	else:
 		$RegCollider.disabled = false
 
-func get_state_name(player_state: PlayerState) -> String:
+func _get_state_name(player_state: PlayerState) -> String:
 	#This is used for displaying the state above the players head
 	match player_state:
 		PlayerState.IDLE: return "IDLE"
@@ -186,8 +205,15 @@ func get_state_name(player_state: PlayerState) -> String:
 		PlayerState.SLIDE: return "SLIDE"
 		PlayerState.FALL: return "FALL"
 		PlayerState.CROUCH: return "CROUCH"
+		PlayerState.HANG: return "HANG"
 	return "UNKNOWN"
-
+	
+func _apply_horizontal_movement(delta: float) -> void:
+	if input_vector != Vector2.ZERO:
+		velocity.x = move_toward(velocity.x, input_vector.x * MAX_CROUCH_SPEED, ACCEL * delta)
+	else:
+		velocity.x = move_toward(velocity.x, 0, FRICTION * delta)
+		
 func _process_idle(delta: float) -> void:
 	velocity.x = move_toward(velocity.x, 0, FRICTION * delta)
 	velocity.y += GRAVITY * delta
@@ -197,15 +223,13 @@ func _process_run(delta: float) -> void:
 	velocity.y += GRAVITY * delta
 
 func _process_jump(delta: float) -> void:
+	_apply_horizontal_movement(delta)
 	velocity.y += GRAVITY * delta
 
 func _process_fall(delta: float) -> void:
 	velocity.y += GRAVITY * delta
 	# Allow movement while falling
-	if input_vector != Vector2.ZERO:
-		velocity.x = move_toward(velocity.x, input_vector.x * MAX_WALK_SPEED, ACCEL * delta)
-	else:
-		velocity.x = move_toward(velocity.x, 0, FRICTION * delta)
+	_apply_horizontal_movement(delta)
 
 func _process_slide(delta: float) -> void:
 	velocity.x = move_toward(velocity.x, 0, SLIDE_FRICTION * delta)
@@ -215,11 +239,23 @@ func _process_wall_slide(delta: float) -> void:
 	velocity.y = min(velocity.y + GRAVITY * delta, 30)
 
 func _process_crouch(delta: float) -> void:
-	if input_vector != Vector2.ZERO:
-		velocity.x = move_toward(velocity.x, input_vector.x * MAX_CROUCH_SPEED, ACCEL * delta)
-	else:
-		velocity.x = move_toward(velocity.x, 0, FRICTION * delta)
+	_apply_horizontal_movement(delta)
+	
+func _process_hang(_delta: float) -> void:
+	var hand_offset: Vector2 = Vector2(7, -7)
+	var hand_pos: Vector2 = global_position + hand_offset
+	
+	var y: int = int(hand_pos.y)
+	var snapped_y = y - ((y ) % 16)
+	if abs(snapped_y + 16 - y) < abs(snapped_y - y):
+		snapped_y += 16
 
+	var delta_y: int= snapped_y - int(hand_pos.y)
+	global_position.y += delta_y
+
+	
+	velocity = Vector2.ZERO
+	
 func _physics_process(delta: float) -> void:
 	_handle_input()
 	match state:
@@ -237,6 +273,8 @@ func _physics_process(delta: float) -> void:
 			_process_fall(delta)
 		PlayerState.CROUCH:
 			_process_crouch(delta)
+		PlayerState.HANG:
+			_process_hang(delta)
 	_update_state()
 	move_and_slide()
 
@@ -258,6 +296,10 @@ func _ready() -> void:
 	state_textures[PlayerState.JUMP] = preload("res://Assets/Sprites/Player/PlayerJumping.png")
 	state_textures[PlayerState.RUN] = preload("res://Assets/Sprites/Player/PlayerRun.png")
 	state_textures[PlayerState.WALL_SLIDE] = preload("res://Assets/Sprites/Player/PlayerWallSliding.png")
-
+	state_textures[PlayerState.HANG] = preload("res://Assets/Sprites/Player/PlayerHang.png")
 func _on_coyote_timer_timeout() -> void:
 	can_coyote = false
+
+
+func _on_hang_cooldown_timeout() -> void:
+	can_hang = true
