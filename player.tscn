@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://bika4472fwiup"]
 
 [ext_resource type="Script" uid="uid://ysdyd1te136g" path="res://player.gd" id="1_onrkg"]
-[ext_resource type="Texture2D" uid="uid://bv60p06xpm8u" path="res://Assets/Sprites/Player/Idle.png" id="2_i3pqv"]
+[ext_resource type="Texture2D" uid="uid://csfaoapo1gosx" path="res://Assets/Sprites/Player/Hang.png" id="2_i3pqv"]
 [ext_resource type="PackedScene" uid="uid://blrqyccncs87y" path="res://StateMachine/state_machine.tscn" id="3_i3pqv"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_onrkg"]
@@ -36,7 +36,6 @@ shape = SubResource("CapsuleShape2D_i3pqv")
 disabled = true
 
 [node name="CrouchCollider" type="CollisionShape2D" parent="."]
-visible = false
 z_index = 2
 position = Vector2(-1, 5)
 shape = SubResource("CapsuleShape2D_hqtel")
@@ -63,25 +62,22 @@ target_position = Vector2(14, 0)
 
 [node name="ClimbCheckLeft" type="RayCast2D" parent="RayChecks"]
 position = Vector2(0, -9)
-target_position = Vector2(-17, 0)
+target_position = Vector2(-14, 0)
 
 [node name="RightWallCheck" type="RayCast2D" parent="RayChecks"]
-visible = false
-position = Vector2(-1, -2)
+position = Vector2(0, -2)
 target_position = Vector2(12, 0)
 
 [node name="LeftWallCheck" type="RayCast2D" parent="RayChecks"]
-visible = false
 position = Vector2(0, -2)
 target_position = Vector2(-12, 0)
 
 [node name="CeilingCheck" type="RayCast2D" parent="RayChecks"]
-visible = false
-position = Vector2(0, 10)
-target_position = Vector2(0, -24)
+position = Vector2(-1, 4)
+target_position = Vector2(0, -15)
 
-[node name="StateMachine" parent="." node_paths=PackedStringArray("machine_owner") instance=ExtResource("3_i3pqv")]
-machine_owner = NodePath("..")
+[node name="StateMachine" parent="." node_paths=PackedStringArray("player") instance=ExtResource("3_i3pqv")]
+player = NodePath("..")
 
 [connection signal="timeout" from="CoyoteTimer" to="." method="_on_coyote_timer_timeout"]
 [connection signal="timeout" from="HangCooldown" to="." method="_on_hang_cooldown_timeout"]

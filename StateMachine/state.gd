@@ -1,7 +1,8 @@
 extends Node
 class_name State
-var machine_owner: CharacterBody2D = null
+var player: Player = null
 var state_machine: StateMachine = null
+
 func can_enter() -> bool:
 	return false
 	

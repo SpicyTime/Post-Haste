@@ -1,8 +1,8 @@
 extends "res://StateMachine/state.gd"
 
 func can_enter() -> bool:
-	return machine_owner.input_vector.x != 0 and machine_owner.is_on_floor() and not machine_owner.is_sliding
+	return player.input_vector.x != 0 and player.is_on_floor() and not player.is_sliding and not player.is_touching_ceiling()
 	
 func update(delta: float) -> void:
-	machine_owner.velocity.x = move_toward( machine_owner.velocity.x,  machine_owner.input_vector.x *  machine_owner.MAX_WALK_SPEED,  machine_owner.ACCEL * delta)
-	machine_owner.velocity.y += machine_owner.GRAVITY * delta
+	player.velocity.x = move_toward( player.velocity.x,  player.input_vector.x *  player.MAX_WALK_SPEED,  player.ACCEL * delta)
+	player.velocity.y += player.GRAVITY * delta

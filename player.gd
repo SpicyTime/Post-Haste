@@ -1,4 +1,5 @@
 extends CharacterBody2D
+class_name Player
 @onready var left_wall_check: RayCast2D = $RayChecks/LeftWallCheck
 @onready var right_wall_check: RayCast2D = $RayChecks/RightWallCheck
 @onready var ceiling_check: RayCast2D = $RayChecks/CeilingCheck
@@ -8,6 +9,7 @@ extends CharacterBody2D
 @onready var state_machine: Node = $StateMachine
 @onready var label: Label = $Label
 @onready var coyote_timer: Timer = $CoyoteTimer
+@onready var hang_cooldown: Timer = $HangCooldown
 
 @export var coyote_time_buffer: float = 0.2
 
@@ -31,9 +33,9 @@ var crouch_pressed: bool = false
 var can_coyote: bool = false
 var can_hang: bool = true
 var input_vector: Vector2 = Vector2.ZERO
-var prev_texture: Texture2D
 var jump_chain_time: float = 0.7
 var time_since_wall_jump: float = 0.0
+
 func disable_colliders() -> void:
 	$RegCollider.disabled = true
 	$SlideCollider.disabled = true
@@ -44,19 +46,39 @@ func check_wall_slide_manual() -> bool:
 		(input_vector.x > 0 and _is_on_right_wall()) or 
 		(input_vector.x < 0 and _is_on_left_wall())
 	) and not is_on_floor()
+
+func should_hang() -> bool:
+	var facing_direction: int = get_facing_direction()
+	var left: bool = not climb_check_left.is_colliding() and _is_on_left_wall() and facing_direction == -1
+	var right: bool = not climb_check_right.is_colliding() and _is_on_right_wall() and facing_direction == 1
+	return left or right
+func should_cancel_hang() -> bool:
 	
-func hang_touching_wall() -> bool:
-	return climb_check_left.is_colliding() or climb_check_right.is_colliding()
+	return crouch_pressed or input_vector.x != 0
+	
 func is_touching_wall_only() -> bool:
 	return (_is_on_right_wall() or _is_on_left_wall()) and not is_on_floor()
 
 func _is_on_left_wall() -> bool:
 	return left_wall_check.is_colliding()  
-
-func is_touching_ceiling()-> bool: 
-	return ceiling_check.is_colliding()
+	
 func _is_on_right_wall() -> bool:
 	return right_wall_check.is_colliding()
+	
+func get_ray_collision_object(ray: RayCast2D) -> Node2D:
+	if ray:
+		if ray.is_colliding():
+			return ray.get_collider()
+	return null
+	
+func get_ray_collision_point(ray: RayCast2D) -> Vector2:
+	if ray:
+		if ray.is_colliding():
+			return ray.get_collision_point()
+	return Vector2.ZERO
+	
+func is_touching_ceiling()-> bool: 
+	return ceiling_check.is_colliding()
 
 func _perform_wall_jump() -> void:
 	#Checks which wall the player is sliding on and applies a diagnol force in the opposite direction
@@ -74,7 +96,8 @@ func _should_perform_slide() -> bool:
 		elif state_machine.get_state_name(state_machine.prev_state) !=" fall" and crouch_pressed:
 			return true
 	return false
-func _get_facing_direction() -> int:
+	
+func get_facing_direction() -> int:
 	if sprite_2d.flip_h == false:
 		return 1
 	return -1
@@ -96,9 +119,7 @@ func _handle_input() -> void:
 	if Input.is_action_pressed("crouch"):
 		if state_machine.current_state_name == "fall":
 			velocity.y += fall_accel
-		elif state_machine.current_state_name == "hang":
-			can_hang = false
-			$HangCooldown.start()
+		
 		is_crouching = true
 	crouch_pressed = Input.is_action_just_pressed("crouch")
 	
@@ -114,7 +135,7 @@ func _handle_input() -> void:
 			velocity.y = -JUMP_FORCE
 			
 	if jump_pressed and state_machine.get_state_name() == "hang":
-		var facing_direction: int = _get_facing_direction()
+		var facing_direction: int = get_facing_direction()
 		global_position += Vector2(16 * facing_direction, -24) 
 		
 	if slide_pressed and is_on_floor() and not is_sliding:

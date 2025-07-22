@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://blrqyccncs87y"]
+[gd_scene load_steps=11 format=3 uid="uid://blrqyccncs87y"]
 
 [ext_resource type="Script" uid="uid://bc76yr27mqu8l" path="res://StateMachine/state_machine.gd" id="1_jm0mb"]
 [ext_resource type="Script" uid="uid://pfeqgfp7pwm7" path="res://StateMachine/States/idle.gd" id="2_71vpo"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://bves0vlowdgii" path="res://StateMachine/States/hang.gd" id="7_klees"]
 [ext_resource type="Script" uid="uid://bpkyjy2y4q1ye" path="res://StateMachine/States/jump.gd" id="8_4iomq"]
 [ext_resource type="Script" uid="uid://catu6elp52riv" path="res://StateMachine/States/fall.gd" id="9_7ishc"]
+[ext_resource type="Script" uid="uid://bmnb8gu8ftp28" path="res://StateMachine/States/ledge_hang.gd" id="10_7ishc"]
 
 [node name="StateMachine" type="Node"]
 script = ExtResource("1_jm0mb")
@@ -36,3 +37,6 @@ script = ExtResource("8_4iomq")
 
 [node name="Fall" type="Node" parent="."]
 script = ExtResource("9_7ishc")
+
+[node name="LedgeHang" type="Node" parent="."]
+script = ExtResource("10_7ishc")
