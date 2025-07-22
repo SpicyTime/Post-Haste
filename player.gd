@@ -11,6 +11,7 @@ class_name Player
 @onready var coyote_timer: Timer = $CoyoteTimer
 @onready var hang_cooldown: Timer = $HangCooldown
 
+
 @export var coyote_time_buffer: float = 0.2
 
 const GRAVITY: int = 1200
@@ -18,7 +19,7 @@ const MAX_WALK_SPEED: int = 200
 const MAX_CROUCH_SPEED: int = 125
 const ACCEL: int = 1000
 const SLIDE_FORCE: int = 225
-const JUMP_FORCE: int = 325
+const JUMP_FORCE: int = 350
 const SLIDE_JUMP_BOOST: int = 30
 const FRICTION: int = 1400
 const SLIDE_FRICTION: int = 300
@@ -52,8 +53,8 @@ func should_hang() -> bool:
 	var left: bool = not climb_check_left.is_colliding() and _is_on_left_wall() and facing_direction == -1
 	var right: bool = not climb_check_right.is_colliding() and _is_on_right_wall() and facing_direction == 1
 	return left or right
-func should_cancel_hang() -> bool:
 	
+func should_cancel_hang() -> bool:
 	return crouch_pressed or input_vector.x != 0
 	
 func is_touching_wall_only() -> bool:
@@ -127,16 +128,16 @@ func _handle_input() -> void:
 	slide_pressed = _should_perform_slide()
 	jump_pressed = Input.is_action_just_pressed("jump")
 	
-	if jump_pressed and (is_on_floor()  or can_coyote):
+	if jump_pressed and (is_on_floor()  or can_coyote) and not is_touching_ceiling():
 		if state_machine.get_state_name(state_machine.prev_state) == "slide":
 			is_sliding = false
 			velocity.y = -JUMP_FORCE + -SLIDE_JUMP_BOOST
 		else:
 			velocity.y = -JUMP_FORCE
 			
-	if jump_pressed and state_machine.get_state_name() == "hang":
-		var facing_direction: int = get_facing_direction()
-		global_position += Vector2(16 * facing_direction, -24) 
+	#if jump_pressed and state_machine.get_state_name() == "hang":
+		#var facing_direction: int = get_facing_direction()
+		#global_position += Vector2(16 * facing_direction, -24) 
 		
 	if slide_pressed and is_on_floor() and not is_sliding:
 		velocity.x += input_vector.x * SLIDE_FORCE
@@ -147,6 +148,7 @@ func _handle_input() -> void:
 	if is_sliding and ((input_vector.x < 0 and velocity.x > 0) or (input_vector.x > 0 and velocity.x < 0)):
 		is_sliding = false
 		velocity.x /= 1.5
+		
 	elif is_touching_wall_only():
 		if jump_pressed and (state_machine.current_state_name == "wall_slide" or time_since_wall_jump <= jump_chain_time):
 			_perform_wall_jump()

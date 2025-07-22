@@ -46,7 +46,8 @@ func init_states() -> void:
 func _ready() -> void:
 	init_states()
 	init_textures()
-	state_priority = ["idle", "slide", "crouch", "run", "wall_slide", "ledge_hang", "hang", "jump", "fall"]
+	
+	state_priority = ["idle", "slide", "crouch", "run", "wall_slide", "jump", "fall"]
 	change_state("idle")
 	
 func change_state(state_name: String) -> void:
@@ -70,16 +71,17 @@ func update(delta: float) -> void:
 			change_state(state_name)
 			break
 			
-	current_state.update(delta)
-	if prev_texture != state_textures.get(current_state) and prev_texture != null:
-		player.sprite_2d.texture = state_textures.get(current_state) 
+	if prev_texture != state_textures[current_state] and prev_texture != null:
+		print(get_state_name(prev_state), current_state_name)
+		player.sprite_2d.texture = state_textures[current_state]
+		prev_texture = player.sprite_2d.texture  # <- moved down
 		player.disable_colliders()
-		if current_state_name == "slide":
-			player.find_child("SlideCollider").disabled = false
-			player.global_position.y += 8
-		elif current_state_name == "crouch":
-			player.find_child("CrouchCollider").disabled = false
-			player.global_position.y += 10
+		if current_state_name == "slide" and get_state_name(prev_state) != "slide":
+			player.get_child(2).disabled = false
+			
+		elif current_state_name == "crouch" and get_state_name(prev_state) != "crouch":
+			player.get_child(3).disabled = false
+			print("Crouching_Down")
 		else:
-			player.find_child("RegCollider").disabled = false
-	
+			player.get_child(1).disabled = false
+	current_state.update(delta)

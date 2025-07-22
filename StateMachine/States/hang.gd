@@ -13,7 +13,7 @@ func _snap_to_edge() -> void:
 	
 func can_enter() -> bool:
 	return player.should_hang() and player.can_hang
-	
+
 func exit() -> void:
 	is_snapped = false
 	
