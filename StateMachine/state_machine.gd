@@ -8,7 +8,7 @@ var states: Dictionary = {}
 var state_textures: Dictionary = {}
 var state_priority: Array[String] = []
 var player_assets_folder_path: String = "res://Assets/Sprites/Player"
-var prev_texture: Texture2D
+
 
 
 func to_snake_case(input: String) -> String:
@@ -53,15 +53,14 @@ func _ready() -> void:
 func change_state(state_name: String) -> void:
 	if current_state_name == state_name:
 		return
-	prev_texture = state_textures.get(current_state)
 	prev_state = current_state
 	if current_state:
-		print("Prev ", current_state_name)
+		#print("Prev ", current_state_name)
 		current_state.exit()
 	current_state = states[state_name]
 	current_state_name = state_name
 	if current_state:
-		print("Curr ", current_state_name)
+		#print("Curr ", current_state_name)
 		current_state.enter()
 
 func update(delta: float) -> void:
@@ -71,17 +70,13 @@ func update(delta: float) -> void:
 			change_state(state_name)
 			break
 			
-	if prev_texture != state_textures[current_state] and prev_texture != null:
-		print(get_state_name(prev_state), current_state_name)
+	if current_state !=  prev_state:
 		player.sprite_2d.texture = state_textures[current_state]
-		prev_texture = player.sprite_2d.texture  # <- moved down
 		player.disable_colliders()
 		if current_state_name == "slide" and get_state_name(prev_state) != "slide":
 			player.get_child(2).disabled = false
-			
 		elif current_state_name == "crouch" and get_state_name(prev_state) != "crouch":
 			player.get_child(3).disabled = false
-			print("Crouching_Down")
 		else:
 			player.get_child(1).disabled = false
 	current_state.update(delta)

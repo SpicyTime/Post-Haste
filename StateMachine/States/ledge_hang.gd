@@ -12,11 +12,8 @@ func _snap_to_edge() -> void:
 	is_snapped = true
 	
 func _ray_colliding_with_ledge() -> bool:
-	var ray: RayCast2D
-	if player.get_facing_direction() == 1:
-		ray = player.right_wall_check
-	else:
-		ray = player.left_wall_check
+	var ray: RayCast2D = player.floor_check
+	
 	var collision_point: Vector2 = player.get_ray_collision_point(ray)
 	var collision_object: Node2D = player.get_ray_collision_object(ray)
 	if collision_object is TileMapLayer:

@@ -3,14 +3,10 @@ class_name Player
 @onready var left_wall_check: RayCast2D = $RayChecks/LeftWallCheck
 @onready var right_wall_check: RayCast2D = $RayChecks/RightWallCheck
 @onready var ceiling_check: RayCast2D = $RayChecks/CeilingCheck
-@onready var climb_check_right: RayCast2D = $RayChecks/ClimbCheckRight
-@onready var climb_check_left: RayCast2D = $RayChecks/ClimbCheckLeft
 @onready var sprite_2d: Sprite2D = $Sprite2D
 @onready var state_machine: Node = $StateMachine
 @onready var label: Label = $Label
 @onready var coyote_timer: Timer = $CoyoteTimer
-@onready var hang_cooldown: Timer = $HangCooldown
-
 
 @export var coyote_time_buffer: float = 0.2
 
@@ -19,7 +15,7 @@ const MAX_WALK_SPEED: int = 200
 const MAX_CROUCH_SPEED: int = 125
 const ACCEL: int = 1000
 const SLIDE_FORCE: int = 225
-const JUMP_FORCE: int = 350
+const JUMP_FORCE: int = 340
 const SLIDE_JUMP_BOOST: int = 30
 const FRICTION: int = 1400
 const SLIDE_FRICTION: int = 300
@@ -32,7 +28,7 @@ var jump_pressed: bool = false
 var slide_pressed: bool = false
 var crouch_pressed: bool = false
 var can_coyote: bool = false
-var can_hang: bool = true
+var can_jump: bool = false
 var input_vector: Vector2 = Vector2.ZERO
 var jump_chain_time: float = 0.7
 var time_since_wall_jump: float = 0.0
@@ -47,15 +43,6 @@ func check_wall_slide_manual() -> bool:
 		(input_vector.x > 0 and _is_on_right_wall()) or 
 		(input_vector.x < 0 and _is_on_left_wall())
 	) and not is_on_floor()
-
-func should_hang() -> bool:
-	var facing_direction: int = get_facing_direction()
-	var left: bool = not climb_check_left.is_colliding() and _is_on_left_wall() and facing_direction == -1
-	var right: bool = not climb_check_right.is_colliding() and _is_on_right_wall() and facing_direction == 1
-	return left or right
-	
-func should_cancel_hang() -> bool:
-	return crouch_pressed or input_vector.x != 0
 	
 func is_touching_wall_only() -> bool:
 	return (_is_on_right_wall() or _is_on_left_wall()) and not is_on_floor()
@@ -81,7 +68,7 @@ func get_ray_collision_point(ray: RayCast2D) -> Vector2:
 func is_touching_ceiling()-> bool: 
 	return ceiling_check.is_colliding()
 
-func _perform_wall_jump() -> void:
+func perform_wall_jump() -> void:
 	#Checks which wall the player is sliding on and applies a diagnol force in the opposite direction
 	if _is_on_left_wall():
 		velocity.x = JUMP_FORCE * 0.75 
@@ -116,42 +103,23 @@ func _handle_input() -> void:
 	if prev_input_vector.x != input_vector.x and is_on_floor():
 		velocity.x /= 1.75
 		
+	set_collision_mask_value(2, true)
 	is_crouching = false
 	if Input.is_action_pressed("crouch"):
-		if state_machine.current_state_name == "fall":
-			velocity.y += fall_accel
-		
+		set_collision_mask_value(2, false)
 		is_crouching = true
+		 
 	crouch_pressed = Input.is_action_just_pressed("crouch")
 	
 	#Checks if certain actions are being pressed
 	slide_pressed = _should_perform_slide()
 	jump_pressed = Input.is_action_just_pressed("jump")
-	
-	if jump_pressed and (is_on_floor()  or can_coyote) and not is_touching_ceiling():
+	if jump_pressed and (is_on_floor()  or can_coyote) :
 		if state_machine.get_state_name(state_machine.prev_state) == "slide":
 			is_sliding = false
 			velocity.y = -JUMP_FORCE + -SLIDE_JUMP_BOOST
 		else:
 			velocity.y = -JUMP_FORCE
-			
-	#if jump_pressed and state_machine.get_state_name() == "hang":
-		#var facing_direction: int = get_facing_direction()
-		#global_position += Vector2(16 * facing_direction, -24) 
-		
-	if slide_pressed and is_on_floor() and not is_sliding:
-		velocity.x += input_vector.x * SLIDE_FORCE
-		is_sliding = true
-		
-	#Checks if the player's input direction is not the current direction of the velocity while sliding
-	#If true the slide is cancelled and the player is slowed down and put in the RUN state
-	if is_sliding and ((input_vector.x < 0 and velocity.x > 0) or (input_vector.x > 0 and velocity.x < 0)):
-		is_sliding = false
-		velocity.x /= 1.5
-		
-	elif is_touching_wall_only():
-		if jump_pressed and (state_machine.current_state_name == "wall_slide" or time_since_wall_jump <= jump_chain_time):
-			_perform_wall_jump()
 	
 func apply_horizontal_movement(delta: float) -> void:
 	if input_vector != Vector2.ZERO:
@@ -176,7 +144,3 @@ func _process(delta: float) -> void:
 	
 func _on_coyote_timer_timeout() -> void:
 	can_coyote = false
-
-
-func _on_hang_cooldown_timeout() -> void:
-	can_hang = true
