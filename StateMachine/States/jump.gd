@@ -1,5 +1,6 @@
 extends "res://StateMachine/state.gd"
 func can_enter() -> bool:
+	
 	return (player.velocity.y < 0 or player.jump_pressed and (player.is_on_floor()  or player.can_coyote)  ) and not player.is_touching_ceiling()
 	
 func enter() -> void:

@@ -4,7 +4,9 @@ func can_enter() -> bool:
 	return true
 
 func enter() -> void:
-	pass
+	var prev_state_name = state_machine.get_state_name(state_machine.prev_state)
+	player.can_coyote = prev_state_name != "jump" and prev_state_name != "fall" and prev_state_name != "wall_slide"
+	player.coyote_timer.start() 
 	
 func update(delta: float) -> void:
 	player.apply_horizontal_movement(delta)

@@ -1,26 +1,18 @@
-[gd_scene load_steps=5 format=3 uid="uid://dhmmbb3wk1y43"]
+[gd_scene load_steps=4 format=3 uid="uid://dhmmbb3wk1y43"]
 
 [ext_resource type="Script" uid="uid://c1h4254umcnj2" path="res://Game/camera.gd" id="1_7raqb"]
 [ext_resource type="PackedScene" uid="uid://bika4472fwiup" path="res://player.tscn" id="2_jcm6v"]
 [ext_resource type="PackedScene" uid="uid://b7ewgtknxwdph" path="res://test_scene.tscn" id="3_fwxkx"]
 
-[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_80nbo"]
-
 [node name="Game" type="Node2D"]
 
 [node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("player")]
+position = Vector2(1650, 0)
 position_smoothing_enabled = true
 script = ExtResource("1_7raqb")
 player = NodePath("../Player")
 
-[node name="Player" parent="." instance=ExtResource("2_jcm6v")]
-position = Vector2(10, 52)
-
-[node name="StaticBody2D" type="StaticBody2D" parent="."]
-position = Vector2(9, -92)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
-position = Vector2(-9, 179)
-shape = SubResource("WorldBoundaryShape2D_80nbo")
-
 [node name="Test Scene" parent="." instance=ExtResource("3_fwxkx")]
+
+[node name="Player" parent="." instance=ExtResource("2_jcm6v")]
+position = Vector2(1753, 67)

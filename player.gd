@@ -14,11 +14,11 @@ const GRAVITY: int = 1200
 const MAX_WALK_SPEED: int = 200
 const MAX_CROUCH_SPEED: int = 125
 const ACCEL: int = 1000
-const SLIDE_FORCE: int = 225
-const JUMP_FORCE: int = 340
+const SLIDE_FORCE: int = 170
+const JUMP_FORCE: int = 325
 const SLIDE_JUMP_BOOST: int = 30
 const FRICTION: int = 1400
-const SLIDE_FRICTION: int = 300
+const SLIDE_FRICTION: int = 275
 const AIR_FRICTION: int = 600
 var state_textures: Dictionary = {}
 var state_colliders: Dictionary = {}
@@ -114,6 +114,7 @@ func _handle_input() -> void:
 	#Checks if certain actions are being pressed
 	slide_pressed = _should_perform_slide()
 	jump_pressed = Input.is_action_just_pressed("jump")
+	
 	if jump_pressed and (is_on_floor()  or can_coyote) :
 		if state_machine.get_state_name(state_machine.prev_state) == "slide":
 			is_sliding = false
@@ -135,7 +136,7 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	time_since_wall_jump += delta
-	coyote_timer.wait_time = coyote_time_buffer
+	#coyote_timer.wait_time = coyote_time_buffer
 	#Flips sprite based on movement direction
 	if velocity.x > 0:
 		sprite_2d.flip_h = false
